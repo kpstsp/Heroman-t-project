@@ -4,6 +4,7 @@ out/
 bin/
 
 # IDE files
+.aider.tags.cache.v4
 .vscode/
 .idea/
 *.swp
