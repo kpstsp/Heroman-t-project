@@ -1,0 +1,34 @@
+# Build directories
+build/
+out/
+bin/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Generated files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Dependencies
+deps/
+vendor/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Project specific
+assets/font.ttf
