@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize database
     sqlite3* db;
-    if (db_init("habitica.db", &db) != 0) {
+    if (db_init("heroman.db", &db) != 0) {
         SDL_Log("Failed to initialize database\n");
         TTF_Quit();
         SDL_Quit();
@@ -285,7 +285,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Create window
-    SDL_Window* window = SDL_CreateWindow("Habitica Clone",
+    SDL_Window* window = SDL_CreateWindow("Heroman project",
                                          SDL_WINDOWPOS_CENTERED,
                                          SDL_WINDOWPOS_CENTERED,
                                          WINDOW_WIDTH,
@@ -551,7 +551,7 @@ int main(int argc, char* argv[]) {
         SDL_RenderClear(renderer);
 
         // Draw UI elements
-        ui_draw_text(&ui, "Habitica Clone", 10, 10);
+        ui_draw_text(&ui, "Heroman project", 10, 10);
         
         if (!showing_task_dialog) {
             // Draw main menu

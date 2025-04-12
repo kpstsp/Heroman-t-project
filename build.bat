@@ -70,5 +70,5 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo Build successful!
-echo You can run the program with: .\habitica_clone.exe
+echo You can run the program with: .\heroman_project.exe
 cd .. 

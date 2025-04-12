@@ -15,7 +15,7 @@ Game* game_init(void) {
     }
 
     // Initialize SDL window and renderer
-    game->window = SDL_CreateWindow("Habitica Clone",
+    game->window = SDL_CreateWindow("Heroman project",
                                    SDL_WINDOWPOS_CENTERED,
                                    SDL_WINDOWPOS_CENTERED,
                                    WINDOW_WIDTH,
@@ -43,7 +43,7 @@ Game* game_init(void) {
     }
 
     // Initialize database
-    if (db_init("habitica.db", &game->db) != 0) {
+    if (db_init("heroman.db", &game->db) != 0) {
         TTF_CloseFont(game->font);
         SDL_DestroyRenderer(game->renderer);
         SDL_DestroyWindow(game->window);

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(habitica_clone C)
+project(heroman_project C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -46,10 +46,10 @@ set(HEADERS
 )
 
 # Create executable
-add_executable(habitica_clone ${SOURCES} ${HEADERS})
+add_executable(heroman_project ${SOURCES} ${HEADERS})
 
 # Include directories
-target_include_directories(habitica_clone PRIVATE 
+target_include_directories(heroman_project PRIVATE 
     include
     ${SDL2_INCLUDE_DIRS}
     ${SDL2_IMAGE_INCLUDE_DIRS}
@@ -57,7 +57,7 @@ target_include_directories(habitica_clone PRIVATE
 )
 
 # Link libraries
-target_link_libraries(habitica_clone
+target_link_libraries(heroman_project
     ${SDL2_LIBRARIES}
     ${SDL2_IMAGE_LIBRARIES}
     ${SDL2_TTF_LIBRARIES}
