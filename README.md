@@ -1,6 +1,7 @@
 # Heroman project
 
-A task management and gamification application inspired by the Heroman project concept.
+A task management and gamification application:
+     the Heroman project.
 
 ## Features
 
