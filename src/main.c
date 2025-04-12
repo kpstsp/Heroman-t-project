@@ -75,6 +75,7 @@ typedef struct {
     int cursor_position;
     time_t last_cursor_blink;
     int cursor_visible;
+    int task_id;
 } TaskDialog;
 
 // Task type names
@@ -383,30 +384,57 @@ int main(int argc, char* argv[]) {
                         task_init(&task, task_dialog.title, task_dialog.description,
                                 task_dialog.difficulty, task_dialog.type);
                         
-                        if (db_create_task(db, &task) == 0) {
-                            // Add task to list
-                            if (task_list.count >= task_list.capacity) {
-                                int new_capacity = task_list.capacity == 0 ? 10 : task_list.capacity * 2;
-                                Task* new_tasks = realloc(task_list.tasks, new_capacity * sizeof(Task));
-                                if (new_tasks) {
-                                    task_list.tasks = new_tasks;
-                                    task_list.capacity = new_capacity;
+                        if (task_dialog.task_id != 0) {
+                            // We're editing an existing task
+                            task.id = task_dialog.task_id;
+                            
+                            // Find the task in the list
+                            int task_index = -1;
+                            for (int i = 0; i < task_list.count; i++) {
+                                if (task_list.tasks[i].id == task_dialog.task_id) {
+                                    task_index = i;
+                                    break;
                                 }
                             }
                             
-                            if (task_list.count < task_list.capacity) {
-                                task_list.tasks[task_list.count++] = task;
-                                show_message(&message, "Task created successfully!");
+                            if (task_index != -1) {
+                                // Preserve completion status and streak
+                                task.completed = task_list.tasks[task_index].completed;
+                                task.streak = task_list.tasks[task_index].streak;
+                                task.last_completed = task_list.tasks[task_index].last_completed;
+                                
+                                if (db_update_task(db, &task) == 0) {
+                                    task_list.tasks[task_index] = task;
+                                    show_message(&message, "Task updated successfully!");
+                                } else {
+                                    show_message(&message, "Failed to update task!");
+                                }
                             }
-                            else {
-                                show_message(&message, "Failed to add task to list!");
+                        } else {
+                            // Create new task
+                            if (db_create_task(db, &task) == 0) {
+                                // Add task to list
+                                if (task_list.count >= task_list.capacity) {
+                                    int new_capacity = task_list.capacity == 0 ? 10 : task_list.capacity * 2;
+                                    Task* new_tasks = realloc(task_list.tasks, new_capacity * sizeof(Task));
+                                    if (new_tasks) {
+                                        task_list.tasks = new_tasks;
+                                        task_list.capacity = new_capacity;
+                                    }
+                                }
+                                
+                                if (task_list.count < task_list.capacity) {
+                                    task_list.tasks[task_list.count++] = task;
+                                    show_message(&message, "Task created successfully!");
+                                } else {
+                                    show_message(&message, "Failed to add task to list!");
+                                }
+                            } else {
+                                show_message(&message, "Failed to save task to database!");
                             }
-                            
-                            showing_task_dialog = 0;
                         }
-                        else {
-                            show_message(&message, "Failed to save task to database!");
-                        }
+                        
+                        showing_task_dialog = 0;
                     }
                     else if (ui_is_button_clicked(&ui, TASK_CANCEL_BUTTON_X, TASK_CANCEL_BUTTON_Y,
                                                 TASK_CANCEL_BUTTON_WIDTH, TASK_CANCEL_BUTTON_HEIGHT,
@@ -510,6 +538,7 @@ int main(int argc, char* argv[]) {
                             strncpy(task_dialog.description, task_list.tasks[i].description, sizeof(task_dialog.description) - 1);
                             task_dialog.difficulty = task_list.tasks[i].difficulty;
                             task_dialog.type = task_list.tasks[i].type;
+                            task_dialog.task_id = task_list.tasks[i].id;
                             task_dialog.editing_title = 0;
                             task_dialog.editing_description = 0;
                             task_dialog.cursor_position = 0;
