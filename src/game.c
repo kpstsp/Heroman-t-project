@@ -147,4 +147,66 @@ void game_handle_input(Game* game, SDL_Event* event) {
             break;
         // Add more event handling as needed
     }
+}
+
+void game_filter_tasks(Game* game, TaskFilter filter) {
+    if (!game) return;
+    
+    game->current_filter = filter;
+    
+    // Reload all tasks from database
+    Task* all_tasks = NULL;
+    int all_count = 0;
+    if (db_get_all_tasks(game->db, &all_tasks, &all_count) != 0) {
+        return;
+    }
+    
+    // Filter tasks
+    int filtered_count = 0;
+    for (int i = 0; i < all_count; i++) {
+        if (filter == TASK_FILTER_ALL ||
+            (filter == TASK_FILTER_COMPLETED && all_tasks[i].completed) ||
+            (filter == TASK_FILTER_UNCOMPLETED && !all_tasks[i].completed)) {
+            if (filtered_count < game->max_tasks) {
+                game->tasks[filtered_count++] = all_tasks[i];
+            }
+        }
+    }
+    
+    game->task_count = filtered_count;
+    free(all_tasks);
+    
+    // Re-sort the filtered tasks
+    game_sort_tasks(game, game->current_sort);
+}
+
+void game_sort_tasks(Game* game, TaskSort sort) {
+    if (!game) return;
+    
+    game->current_sort = sort;
+    
+    // Simple bubble sort for demonstration
+    for (int i = 0; i < game->task_count - 1; i++) {
+        for (int j = 0; j < game->task_count - i - 1; j++) {
+            int should_swap = 0;
+            
+            switch (sort) {
+                case TASK_SORT_TYPE:
+                    should_swap = game->tasks[j].type > game->tasks[j + 1].type;
+                    break;
+                case TASK_SORT_DIFFICULTY:
+                    should_swap = game->tasks[j].difficulty > game->tasks[j + 1].difficulty;
+                    break;
+                case TASK_SORT_COMPLETION:
+                    should_swap = game->tasks[j].completed && !game->tasks[j + 1].completed;
+                    break;
+            }
+            
+            if (should_swap) {
+                Task temp = game->tasks[j];
+                game->tasks[j] = game->tasks[j + 1];
+                game->tasks[j + 1] = temp;
+            }
+        }
+    }
 } 

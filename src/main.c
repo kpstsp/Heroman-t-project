@@ -7,6 +7,15 @@
 #include "ui.h"
 #include "tasks.h"
 #include "database.h"
+#include "sprites.h"
+
+// Function declarations
+void show_message(Message* msg, const char* text);
+void update_message(Message* msg);
+void draw_message(UI* ui, Message* msg);
+
+// Game instance
+Game* game;
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -65,6 +74,21 @@
 #define TASK_ITEM_SPACING 5
 #define TASK_BUTTON_SIZE 30
 
+// Filter and sort button positions
+#define FILTER_ALL_BUTTON_X 120
+#define FILTER_ALL_BUTTON_Y 50
+#define FILTER_COMPLETED_BUTTON_X 230
+#define FILTER_COMPLETED_BUTTON_Y 50
+#define FILTER_UNCOMPLETED_BUTTON_X 340
+#define FILTER_UNCOMPLETED_BUTTON_Y 50
+
+#define SORT_TYPE_BUTTON_X 450
+#define SORT_TYPE_BUTTON_Y 50
+#define SORT_DIFFICULTY_BUTTON_X 560
+#define SORT_DIFFICULTY_BUTTON_Y 50
+#define SORT_COMPLETION_BUTTON_X 670
+#define SORT_COMPLETION_BUTTON_Y 50
+
 typedef struct {
     char title[256];
     char description[512];
@@ -95,12 +119,6 @@ static const char* task_difficulty_names[] = {
 };
 
 typedef struct {
-    char text[256];
-    time_t show_time;
-    int visible;
-} Message;
-
-typedef struct {
     Task* tasks;
     int count;
     int capacity;
@@ -129,11 +147,8 @@ void show_message(Message* msg, const char* text) {
 }
 
 void update_message(Message* msg) {
-    if (msg->visible) {
-        time_t now = time(NULL);
-        if (now - msg->show_time >= MESSAGE_DURATION / 1000) {
-            msg->visible = 0;
-        }
+    if (msg->visible && time(NULL) - msg->show_time >= 3) {
+        msg->visible = 0;
     }
 }
 
@@ -345,6 +360,37 @@ int main(int argc, char* argv[]) {
         task_list.capacity = task_list.count;
     }
 
+    // Initialize sprite manager
+    SpriteManager sprite_manager;
+    if (sprite_manager_init(&sprite_manager, renderer) != 0) {
+        fprintf(stderr, "Failed to initialize sprite manager\n");
+        return 1;
+    }
+
+    // Load sprites
+    const char* sprite_files[] = {
+        "assets/sprites/background.png",
+        "assets/sprites/task_dialog.png",
+        "assets/sprites/button_normal.png",
+        "assets/sprites/button_hover.png",
+        "assets/sprites/button_pressed.png",
+        "assets/sprites/checkbox_unchecked.png",
+        "assets/sprites/checkbox_checked.png",
+        "assets/sprites/icon_habit.png",
+        "assets/sprites/icon_daily.png",
+        "assets/sprites/icon_todo.png",
+        "assets/sprites/icon_difficulty.png",
+        "assets/sprites/icon_edit.png",
+        "assets/sprites/icon_delete.png"
+    };
+
+    for (int i = 0; i < SPRITE_COUNT; i++) {
+        if (sprite_manager_load_sprite(&sprite_manager, i, sprite_files[i]) != 0) {
+            fprintf(stderr, "Failed to load sprite: %s\n", sprite_files[i]);
+            return 1;
+        }
+    }
+
     // Main game loop
     SDL_Event event;
     int running = 1;
@@ -372,6 +418,28 @@ int main(int argc, char* argv[]) {
                                                 QUIT_BUTTON_WIDTH, QUIT_BUTTON_HEIGHT,
                                                 mouse_x, mouse_y)) {
                         running = 0;
+                    }
+
+                    // Handle filter buttons
+                    else if (ui_is_button_clicked(&ui, FILTER_ALL_BUTTON_X, FILTER_ALL_BUTTON_Y, 100, 30, mouse_x, mouse_y)) {
+                        game_filter_tasks(game, TASK_FILTER_ALL);
+                    }
+                    else if (ui_is_button_clicked(&ui, FILTER_COMPLETED_BUTTON_X, FILTER_COMPLETED_BUTTON_Y, 100, 30, mouse_x, mouse_y)) {
+                        game_filter_tasks(game, TASK_FILTER_COMPLETED);
+                    }
+                    else if (ui_is_button_clicked(&ui, FILTER_UNCOMPLETED_BUTTON_X, FILTER_UNCOMPLETED_BUTTON_Y, 100, 30, mouse_x, mouse_y)) {
+                        game_filter_tasks(game, TASK_FILTER_UNCOMPLETED);
+                    }
+
+                    // Handle sort buttons
+                    else if (ui_is_button_clicked(&ui, SORT_TYPE_BUTTON_X, SORT_TYPE_BUTTON_Y, 100, 30, mouse_x, mouse_y)) {
+                        game_sort_tasks(game, TASK_SORT_TYPE);
+                    }
+                    else if (ui_is_button_clicked(&ui, SORT_DIFFICULTY_BUTTON_X, SORT_DIFFICULTY_BUTTON_Y, 100, 30, mouse_x, mouse_y)) {
+                        game_sort_tasks(game, TASK_SORT_DIFFICULTY);
+                    }
+                    else if (ui_is_button_clicked(&ui, SORT_COMPLETION_BUTTON_X, SORT_COMPLETION_BUTTON_Y, 100, 30, mouse_x, mouse_y)) {
+                        game_sort_tasks(game, TASK_SORT_COMPLETION);
                     }
                 }
                 else {
@@ -583,6 +651,35 @@ int main(int argc, char* argv[]) {
         ui_draw_text(&ui, "Heroman project", 10, 10);
         
         if (!showing_task_dialog) {
+            // Draw background
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BACKGROUND, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            // Draw filter buttons
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BUTTON_NORMAL, 
+                FILTER_ALL_BUTTON_X, FILTER_ALL_BUTTON_Y, 100, 30);
+            ui_draw_text(&ui, "All", FILTER_ALL_BUTTON_X + 40, FILTER_ALL_BUTTON_Y + 5);
+
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BUTTON_NORMAL, 
+                FILTER_COMPLETED_BUTTON_X, FILTER_COMPLETED_BUTTON_Y, 100, 30);
+            ui_draw_text(&ui, "Completed", FILTER_COMPLETED_BUTTON_X + 20, FILTER_COMPLETED_BUTTON_Y + 5);
+
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BUTTON_NORMAL, 
+                FILTER_UNCOMPLETED_BUTTON_X, FILTER_UNCOMPLETED_BUTTON_Y, 100, 30);
+            ui_draw_text(&ui, "Uncompleted", FILTER_UNCOMPLETED_BUTTON_X + 10, FILTER_UNCOMPLETED_BUTTON_Y + 5);
+
+            // Draw sort buttons
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BUTTON_NORMAL, 
+                SORT_TYPE_BUTTON_X, SORT_TYPE_BUTTON_Y, 100, 30);
+            ui_draw_text(&ui, "Type", SORT_TYPE_BUTTON_X + 35, SORT_TYPE_BUTTON_Y + 5);
+
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BUTTON_NORMAL, 
+                SORT_DIFFICULTY_BUTTON_X, SORT_DIFFICULTY_BUTTON_Y, 100, 30);
+            ui_draw_text(&ui, "Difficulty", SORT_DIFFICULTY_BUTTON_X + 15, SORT_DIFFICULTY_BUTTON_Y + 5);
+
+            sprite_manager_draw_sprite_scaled(&sprite_manager, SPRITE_BUTTON_NORMAL, 
+                SORT_COMPLETION_BUTTON_X, SORT_COMPLETION_BUTTON_Y, 100, 30);
+            ui_draw_text(&ui, "Completion", SORT_COMPLETION_BUTTON_X + 10, SORT_COMPLETION_BUTTON_Y + 5);
+
             // Draw main menu
             ui_draw_button(&ui, "New Task", NEW_TASK_BUTTON_X, NEW_TASK_BUTTON_Y,
                           NEW_TASK_BUTTON_WIDTH, NEW_TASK_BUTTON_HEIGHT);
@@ -693,6 +790,7 @@ int main(int argc, char* argv[]) {
     TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    sprite_manager_cleanup(&sprite_manager);
     TTF_Quit();
     SDL_Quit();
 

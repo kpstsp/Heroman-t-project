@@ -14,6 +14,20 @@ typedef enum {
     GAME_STATE_EXIT
 } GameState;
 
+// Task filter types
+typedef enum {
+    TASK_FILTER_ALL,
+    TASK_FILTER_COMPLETED,
+    TASK_FILTER_UNCOMPLETED
+} TaskFilter;
+
+// Task sort types
+typedef enum {
+    TASK_SORT_TYPE,
+    TASK_SORT_DIFFICULTY,
+    TASK_SORT_COMPLETION
+} TaskSort;
+
 // Player stats
 typedef struct {
     int health;
@@ -38,6 +52,13 @@ typedef struct {
     time_t last_completed;
 } Task;
 
+// Message structure for UI notifications
+typedef struct {
+    char text[256];
+    time_t show_time;
+    int visible;
+} Message;
+
 // Game structure
 typedef struct {
     SDL_Window* window;
@@ -49,6 +70,8 @@ typedef struct {
     Task* tasks;
     int task_count;
     int max_tasks;
+    TaskFilter current_filter;
+    TaskSort current_sort;
 } Game;
 
 // Function declarations
@@ -57,5 +80,7 @@ void game_cleanup(Game* game);
 void game_run(Game* game);
 void game_render(Game* game);
 void game_handle_input(Game* game, SDL_Event* event);
+void game_filter_tasks(Game* game, TaskFilter filter);
+void game_sort_tasks(Game* game, TaskSort sort);
 
 #endif // GAME_H 

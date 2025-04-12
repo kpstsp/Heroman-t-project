@@ -34,6 +34,7 @@ set(SOURCES
     src/player.c
     src/tasks.c
     src/ui.c
+    src/sprites.c
 )
 
 # Add header files
@@ -43,6 +44,7 @@ set(HEADERS
     include/player.h
     include/tasks.h
     include/ui.h
+    include/sprites.h
 )
 
 # Create executable
